@@ -20,6 +20,16 @@ bundled Vosk model; first use extracts it to `~/.lira/model-ru`. A microphone
 and roughly 100 MB of additional disk space are needed. Voice replies use the
 operating system's built-in speech tools. Browser search requires internet.
 
+When the Wi-Fi sync server is enabled on the PC and the Android phone has been
+paired in Settings, commands in the phone chat or background voice mode can
+target the PC: `запусти на ПК <приложение>`, `открой на ПК <приложение, документ или папка>`,
+and `найди на ПК <запрос>` (opens a browser search on the PC). File search is
+name-based across local drives, skips Windows system/application folders, and
+opens only folders or common document/media formats; executable and script
+files are not opened. To keep local-disk searches bounded, each request scans
+at most 100,000 entries or 20 seconds. Keep the pairing code private and enable
+Wi-Fi sync only on a trusted local network: the protocol uses unencrypted HTTP.
+
 To create a Windows GUI app image without a console, run the build above on
 Windows with JDK 17 and then use `jpackage` with the JavaFX Windows jars:
 

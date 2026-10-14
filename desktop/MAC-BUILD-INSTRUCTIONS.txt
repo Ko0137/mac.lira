@@ -53,3 +53,8 @@ The app works offline for local data and Russian voice recognition after the
 first launch extracts its bundled speech model. Allow microphone access if
 voice input is used. Browser searches require internet. Local Wi-Fi sync is
 not encrypted; use a trusted private network.
+
+When the desktop sync server is enabled and paired with Android, the phone can
+ask the desktop app to open installed apps, locate and open common documents
+or folders, or run a browser search. Remote file opening excludes executable
+and script files.

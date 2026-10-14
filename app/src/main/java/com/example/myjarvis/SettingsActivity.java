@@ -135,10 +135,12 @@ public class SettingsActivity extends AppCompatActivity {
         address.setSingleLine(true);
         address.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         address.setHint("IP компьютера, например 192.168.1.20");
+        address.setText(prefs.getString("pc_host", ""));
         EditText token = new EditText(this);
         token.setSingleLine(true);
         token.setInputType(InputType.TYPE_CLASS_NUMBER);
         token.setHint("8-значный код пары с ПК");
+        token.setText(prefs.getString("pc_token", ""));
         LinearLayout fields = new LinearLayout(this);
         fields.setOrientation(LinearLayout.VERTICAL);
         int padding = (int) (16 * getResources().getDisplayMetrics().density);
@@ -147,8 +149,11 @@ public class SettingsActivity extends AppCompatActivity {
         fields.addView(token);
         new AlertDialog.Builder(this)
                 .setTitle("Синхронизация по локальному Wi-Fi")
-                .setMessage("На ПК включи синхронизацию в Настройках и введи его IP и код. "
-                        + "Используй только доверенную сеть: соединение локальное, но не шифруется.")
+                .setMessage("На ПК включи сервер в Настройках и введи его IP и код. "
+                        + "После подключения можно сказать «запусти на ПК …», "
+                        + "«открой на ПК …» или «найди на ПК …». "
+                        + "Телефон и приложение на ПК должны быть включены. "
+                        + "Соединение не шифруется — используй только доверенную Wi‑Fi сеть.")
                 .setView(fields)
                 .setNegativeButton("Отмена", null)
                 .setPositiveButton("Синхронизировать", (dialog, which) ->
@@ -202,8 +207,15 @@ public class SettingsActivity extends AppCompatActivity {
                     throw new IllegalStateException("ПК вернул ответ " + status + ".");
                 }
                 store.mergeSyncSnapshot(new JSONObject(body.toString()));
-                runOnUiThread(() -> Toast.makeText(this,
-                        "Синхронизация завершена.", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    getSharedPreferences("LiraPrefs", MODE_PRIVATE).edit()
+                            .putString("pc_host", host)
+                            .putString("pc_token", token)
+                            .apply();
+                    Toast.makeText(this,
+                            "Синхронизация завершена. Команды для ПК теперь доступны.",
+                            Toast.LENGTH_LONG).show();
+                });
             } catch (Exception exception) {
                 runOnUiThread(() -> Toast.makeText(this,
                         "Синхронизация не удалась: " + exception.getMessage(),

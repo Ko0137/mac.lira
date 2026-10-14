@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.navigation.NavigationView;
 
+import java.io.IOException;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -35,6 +36,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -62,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private int voiceRequestId;
     private boolean isFlashlightOn = false;
     private String selectedTab = "chat";
+    private final ExecutorService pcCommandExecutor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -330,6 +334,12 @@ public class MainActivity extends AppCompatActivity {
         addMessage(text, true);
         String lower = text.toLowerCase(Locale.ROOT);
 
+        PcCommandClient.Command pcCommand = PcCommandClient.parse(text);
+        if (pcCommand != null) {
+            sendPcCommand(pcCommand);
+            return;
+        }
+
         List<FinanceVoiceParser.Entry> financeEntries = FinanceVoiceParser.parse(text);
         if (!financeEntries.isEmpty()) {
             String date = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
@@ -386,6 +396,25 @@ public class MainActivity extends AppCompatActivity {
         } else {
             addMessage("Команда принята. Используй меню слева или попроси меня открыть приложение/найти информацию!", false);
         }
+    }
+
+    private void sendPcCommand(PcCommandClient.Command command) {
+        if (command.query.isEmpty()) {
+            addMessage(command.action.equals("search")
+                    ? "Скажи, что найти в браузере на ПК."
+                    : "Назови программу, документ или папку на ПК.", false);
+            return;
+        }
+        addMessage("Отправляю команду на ПК…", false);
+        pcCommandExecutor.execute(() -> {
+            try {
+                String response = PcCommandClient.execute(this, command);
+                runOnUiThread(() -> addMessage(response, false));
+            } catch (IOException exception) {
+                runOnUiThread(() -> addMessage(
+                        "Не удалось выполнить команду на ПК: " + exception.getMessage(), false));
+            }
+        });
     }
 
     private boolean startsWithCommand(String message, String... commands) {
@@ -457,6 +486,7 @@ public class MainActivity extends AppCompatActivity {
             voiceRecognizer.stop();
             voiceRecognizer = null;
         }
+        pcCommandExecutor.shutdownNow();
         dataStore.close();
         super.onDestroy();
     }

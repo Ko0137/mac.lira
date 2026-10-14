@@ -63,6 +63,7 @@ public class LiraBackgroundService extends Service {
     private volatile boolean destroyed;
     private AudioRecord audioRecord;
     private ExecutorService audioExecutor;
+    private ExecutorService commandExecutor;
     private Model model;
     private long wakeWordExpiry;
 
@@ -272,6 +273,31 @@ public class LiraBackgroundService extends Service {
 
     private void executeOrNotify(String command) {
         String lower = command.toLowerCase(new Locale("ru"));
+        PcCommandClient.Command pcCommand = PcCommandClient.parse(command);
+        if (pcCommand != null) {
+            if (pcCommand.query.isEmpty()) {
+                notifyCommand(pcCommand.action.equals("search")
+                        ? "Скажи, что найти в браузере на ПК."
+                        : "Назови программу, документ или папку на ПК.", null);
+                return;
+            }
+            if (commandExecutor == null || commandExecutor.isShutdown()) {
+                commandExecutor = Executors.newSingleThreadExecutor();
+            }
+            commandExecutor.execute(() -> {
+                String result;
+                try {
+                    result = PcCommandClient.execute(this, pcCommand);
+                } catch (IOException exception) {
+                    result = "Не удалось выполнить команду на ПК: " + exception.getMessage();
+                    Log.w(TAG, "Failed to send a voice command to the paired PC", exception);
+                }
+                if (!destroyed) {
+                    notifyCommand(result, null);
+                }
+            });
+            return;
+        }
         List<FinanceVoiceParser.Entry> entries = FinanceVoiceParser.parse(command);
         if (!entries.isEmpty()) {
             OfflineDataStore store = new OfflineDataStore(this);
@@ -553,6 +579,10 @@ public class LiraBackgroundService extends Service {
                 model.close();
             }
             model = null;
+        }
+        if (commandExecutor != null) {
+            commandExecutor.shutdownNow();
+            commandExecutor = null;
         }
         audioRecord = null;
         getSharedPreferences(PREFERENCES, MODE_PRIVATE).edit()

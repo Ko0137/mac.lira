@@ -137,13 +137,16 @@ public final class LiraDesktopApp extends Application {
                 }
                 String token = String.format(Locale.ROOT, "%08d",
                         new SecureRandom().nextInt(100_000_000));
-                syncServer = new SyncServer(store, token);
+                syncServer = new SyncServer(store, token,
+                        new RemoteCommandHandler(applicationLauncher));
                 syncServer.start();
                 List<String> addresses = SyncServer.localAddresses();
                 syncStatus.setText("Адрес ПК: " + (addresses.isEmpty()
                         ? "не удалось определить" : String.join(", ", addresses))
                         + "\nПорт: " + SyncServer.PORT + "\nКод пары: " + token
-                        + "\nВведите адрес и код в настройках Android. Только доверенная Wi‑Fi сеть.");
+                        + "\nВведите адрес и код в настройках Android. Только доверенная Wi‑Fi сеть."
+                        + "\nКоманды с телефона: «запусти на ПК …», «открой на ПК …», "
+                        + "«найди на ПК …».");
             } catch (IOException exception) {
                 report("Не удалось запустить синхронизацию.", exception);
             }
