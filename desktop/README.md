@@ -30,7 +30,7 @@ Copy-Item "build\libs\lira-desktop-1.0.0-all.jar" $packageInput
 $fx = "build\install\lira-desktop\lib"
 $modules = "$env:JAVA_HOME\jmods;$fx\javafx-base-21.0.2-win.jar;$fx\javafx-graphics-21.0.2-win.jar;$fx\javafx-controls-21.0.2-win.jar"
 $runtimeModules = "javafx.controls,jdk.httpserver,java.sql,jdk.unsupported,java.logging,java.naming,java.management"
-jpackage --type app-image --name LIRA --app-version 0.3.0 `
+jpackage --type app-image --name LIRA --app-version 1.0.0 `
  --input $packageInput --main-jar lira-desktop-1.0.0-all.jar `
   --main-class com.example.lira.desktop.LiraDesktopApp `
  --module-path $modules --add-modules $runtimeModules `

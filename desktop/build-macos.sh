@@ -64,7 +64,7 @@ build_image() {
   package_args=(
     --type dmg
     --name LIRA
-    --app-version 0.3.0
+    --app-version 1.0.0
     --vendor "L.I.R.A."
     --input "$SCRIPT_DIR/build/libs"
     --main-jar lira-desktop-1.0.0-all.jar
