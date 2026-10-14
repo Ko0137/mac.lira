@@ -1,0 +1,651 @@
+package com.example.myjarvis;
+
+import android.Manifest;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.hardware.camera2.CameraManager;
+import android.os.Build;
+import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
+    private ScrollView layoutChatTab, layoutFinanceTab, layoutVibeTab;
+    private LinearLayout layoutNotesTab;
+    private LinearLayout chatContainer, financeListContainer, notesListContainer, habitsContainer;
+    private Button btnTabChat, btnTabFinance, btnTabNotes, btnTabVibe, btnAddFinance, btnAddNote, btnAddHabit, btnSend;
+    private TextView tvTotalBalance, tvIncomeTotal, tvExpenseTotal, btnHelp, btnSettings;
+    private TextView tvVibePercent, tvStepsCount, tvStepsGoal, tvCalories;
+    private ProgressBar pbVibeProgress, pbStepsProgress;
+    private EditText etInput, etFinanceCategory, etFinanceAmount, etNoteInput, etHabitInput;
+    private ImageButton btnVoice;
+
+    private ExpenseDbHelper dbHelper;
+    private NotesDbHelper notesDbHelper;
+    private VibeDbHelper vibeDbHelper;
+
+    private SpeechRecognizer speechRecognizer;
+    private TextToSpeech tts;
+    private SensorManager sensorManager;
+    private Sensor stepCounterSensor;
+
+    private boolean isFlashlightOn = false;
+    private boolean isVoiceEnabled = true;
+
+    private int todaySteps = 0;
+    private int baselineSteps = -1;
+    private String todayDateStr = "";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        todayDateStr = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+        requestAppPermissions();
+
+        // Поиск View
+        layoutChatTab = findViewById(R.id.layoutChatTab);
+        chatContainer = findViewById(R.id.chatContainer);
+        layoutFinanceTab = findViewById(R.id.layoutFinanceTab);
+        financeListContainer = findViewById(R.id.financeListContainer);
+        layoutNotesTab = findViewById(R.id.layoutNotesTab);
+        notesListContainer = findViewById(R.id.notesListContainer);
+        layoutVibeTab = findViewById(R.id.layoutVibeTab);
+        habitsContainer = findViewById(R.id.habitsContainer);
+
+        btnTabChat = findViewById(R.id.btnTabChat);
+        btnTabFinance = findViewById(R.id.btnTabFinance);
+        btnTabNotes = findViewById(R.id.btnTabNotes);
+        btnTabVibe = findViewById(R.id.btnTabVibe);
+
+        tvTotalBalance = findViewById(R.id.tvTotalBalance);
+        tvIncomeTotal = findViewById(R.id.tvIncomeTotal);
+        tvExpenseTotal = findViewById(R.id.tvExpenseTotal);
+
+        tvVibePercent = findViewById(R.id.tvVibePercent);
+        tvStepsCount = findViewById(R.id.tvStepsCount);
+        tvStepsGoal = findViewById(R.id.tvStepsGoal);
+        tvCalories = findViewById(R.id.tvCalories);
+        pbVibeProgress = findViewById(R.id.pbVibeProgress);
+        pbStepsProgress = findViewById(R.id.pbStepsProgress);
+
+        etInput = findViewById(R.id.etInput);
+        etFinanceCategory = findViewById(R.id.etFinanceCategory);
+        etFinanceAmount = findViewById(R.id.etFinanceAmount);
+        etNoteInput = findViewById(R.id.etNoteInput);
+        etHabitInput = findViewById(R.id.etHabitInput);
+
+        btnAddFinance = findViewById(R.id.btnAddFinance);
+        btnAddNote = findViewById(R.id.btnAddNote);
+        btnAddHabit = findViewById(R.id.btnAddHabit);
+        btnSend = findViewById(R.id.btnSend);
+        btnVoice = findViewById(R.id.btnVoice);
+        btnHelp = findViewById(R.id.btnHelp);
+        btnSettings = findViewById(R.id.btnSettings);
+
+        dbHelper = new ExpenseDbHelper(this);
+        notesDbHelper = new NotesDbHelper(this);
+        vibeDbHelper = new VibeDbHelper(this);
+
+        setupSpeechRecognizer();
+        setupTextToSpeech();
+        setupStepCounter();
+
+        btnSettings.setOnClickListener(v -> showSettingsDialog());
+        btnHelp.setOnClickListener(v -> addChatMessage("L.I.R.A.", "Раздел помощи:\n• Время/Дата\n• Баланс\n• Фонарик\n• Открой [приложение]\n• Финансы (потратил...)\n• Заметки\n• Вайб Трекер и Привычки", false));
+
+        btnTabChat.setOnClickListener(v -> showTab(0));
+        btnTabFinance.setOnClickListener(v -> showTab(1));
+        btnTabNotes.setOnClickListener(v -> showTab(2));
+        btnTabVibe.setOnClickListener(v -> showTab(3));
+
+        btnSend.setOnClickListener(v -> {
+            String text = etInput.getText().toString().trim();
+            if (!text.isEmpty()) {
+                addChatMessage("Вы", text, true);
+                processCommand(text);
+                etInput.setText("");
+            }
+        });
+
+        btnVoice.setOnClickListener(v -> {
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ru-RU");
+            speechRecognizer.startListening(intent);
+            Toast.makeText(this, "L.I.R.A. слушает...", Toast.LENGTH_SHORT).show();
+        });
+
+        btnAddFinance.setOnClickListener(v -> {
+            String cat = etFinanceCategory.getText().toString().trim();
+            String amtStr = etFinanceAmount.getText().toString().trim();
+            if (!cat.isEmpty() && !amtStr.isEmpty()) {
+                try {
+                    addFinanceRecord(cat, Float.parseFloat(amtStr));
+                    etFinanceCategory.setText("");
+                    etFinanceAmount.setText("");
+                    loadFinanceData();
+                    Toast.makeText(this, "Запись сохранена!", Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {}
+            }
+        });
+
+        btnAddNote.setOnClickListener(v -> {
+            String noteText = etNoteInput.getText().toString().trim();
+            if (!noteText.isEmpty()) {
+                saveNote(noteText);
+                etNoteInput.setText("");
+                loadNotesData();
+                Toast.makeText(this, "Заметка сохранена!", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnAddHabit.setOnClickListener(v -> {
+            String habitText = etHabitInput.getText().toString().trim();
+            if (!habitText.isEmpty()) {
+                addHabit(habitText);
+                etHabitInput.setText("");
+                loadHabitsData();
+            }
+        });
+
+        loadFinanceData();
+        loadNotesData();
+        loadHabitsData();
+        addChatMessage("L.I.R.A.", "Система L.I.R.A. AI готова к работе.", false);
+    }
+
+    private void requestAppPermissions() {
+        List<String> perms = new ArrayList<>();
+        perms.add(Manifest.permission.RECORD_AUDIO);
+        perms.add(Manifest.permission.CAMERA);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            perms.add(Manifest.permission.ACTIVITY_RECOGNITION);
+        }
+        ActivityCompat.requestPermissions(this, perms.toArray(new String[0]), 1);
+    }
+
+    private void setupStepCounter() {
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        if (sensorManager != null) {
+            stepCounterSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+            if (stepCounterSensor != null) {
+                sensorManager.registerListener(this, stepCounterSensor, SensorManager.SENSOR_DELAY_UI);
+            }
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
+            int totalStepsSinceBoot = (int) event.values[0];
+            
+            SharedPreferences prefs = getSharedPreferences("lira_pedometer", MODE_PRIVATE);
+            String savedDate = prefs.getString("date", "");
+
+            if (!todayDateStr.equals(savedDate)) {
+                prefs.edit().putString("date", todayDateStr).putInt("baseline", totalStepsSinceBoot).apply();
+                baselineSteps = totalStepsSinceBoot;
+            } else {
+                baselineSteps = prefs.getInt("baseline", totalStepsSinceBoot);
+            }
+
+            todaySteps = Math.max(0, totalStepsSinceBoot - baselineSteps);
+            updatePedometerUI();
+        }
+    }
+
+    private void updatePedometerUI() {
+        tvStepsCount.setText(String.valueOf(todaySteps));
+        pbStepsProgress.setProgress(todaySteps);
+        
+        double km = (todaySteps * 0.7) / 1000.0;
+        tvStepsGoal.setText(String.format(Locale.getDefault(), "%.2f км из 10 000 шагов", km));
+        
+        int calories = (int) (todaySteps * 0.04);
+        tvCalories.setText(calories + " ккал");
+
+        recalculateVibeIndex();
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+
+    private void recalculateVibeIndex() {
+        SQLiteDatabase db = vibeDbHelper.getReadableDatabase();
+        Cursor totalCursor = db.rawQuery("SELECT COUNT(*) FROM " + VibeDbHelper.TABLE_HABITS, null);
+        int totalHabits = 0;
+        if (totalCursor.moveToFirst()) totalHabits = totalCursor.getInt(0);
+        totalCursor.close();
+
+        Cursor doneCursor = db.rawQuery("SELECT COUNT(*) FROM " + VibeDbHelper.TABLE_HABITS + " WHERE " + VibeDbHelper.COLUMN_IS_DONE + "=1", null);
+        int doneHabits = 0;
+        if (doneCursor.moveToFirst()) doneHabits = doneCursor.getInt(0);
+        doneCursor.close();
+
+        double habitScore = (totalHabits > 0) ? ((double) doneHabits / totalHabits) * 50.0 : 0;
+        double stepScore = Math.min(50.0, (todaySteps / 10000.0) * 50.0);
+
+        int totalVibe = (int) Math.round(habitScore + stepScore);
+        tvVibePercent.setText(totalVibe + "%");
+        pbVibeProgress.setProgress(totalVibe);
+    }
+
+    private void addHabit(String title) {
+        SQLiteDatabase db = vibeDbHelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(VibeDbHelper.COLUMN_TITLE, title);
+        cv.put(VibeDbHelper.COLUMN_CATEGORY, "Мои цели");
+        cv.put(VibeDbHelper.COLUMN_STREAK, 0);
+        cv.put(VibeDbHelper.COLUMN_IS_DONE, 0);
+        db.insert(VibeDbHelper.TABLE_HABITS, null, cv);
+        loadHabitsData();
+    }
+
+    private void loadHabitsData() {
+        habitsContainer.removeAllViews();
+        SQLiteDatabase db = vibeDbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT " + VibeDbHelper.COLUMN_ID + ", " + VibeDbHelper.COLUMN_TITLE + ", " + VibeDbHelper.COLUMN_STREAK + ", " + VibeDbHelper.COLUMN_IS_DONE + " FROM " + VibeDbHelper.TABLE_HABITS, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                final int id = cursor.getInt(0);
+                String title = cursor.getString(1);
+                int streak = cursor.getInt(2);
+                boolean isDone = cursor.getInt(3) == 1;
+
+                LinearLayout item = new LinearLayout(this);
+                item.setOrientation(LinearLayout.HORIZONTAL);
+                item.setGravity(Gravity.CENTER_VERTICAL);
+                item.setPadding(0, 8, 0, 8);
+
+                CheckBox cb = new CheckBox(this);
+                cb.setChecked(isDone);
+                cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    SQLiteDatabase wdb = vibeDbHelper.getWritableDatabase();
+                    ContentValues cv = new ContentValues();
+                    cv.put(VibeDbHelper.COLUMN_IS_DONE, isChecked ? 1 : 0);
+                    if (isChecked) cv.put(VibeDbHelper.COLUMN_STREAK, streak + 1);
+                    wdb.update(VibeDbHelper.TABLE_HABITS, cv, VibeDbHelper.COLUMN_ID + "=?", new String[]{String.valueOf(id)});
+                    recalculateVibeIndex();
+                });
+
+                TextView tvTitle = new TextView(this);
+                tvTitle.setText(title);
+                tvTitle.setTextColor(Color.WHITE);
+                tvTitle.setTextSize(13f);
+                tvTitle.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+                TextView tvStreak = new TextView(this);
+                tvStreak.setText("🔥 " + streak + " дн.");
+                tvStreak.setTextColor(Color.parseColor("#00FF66"));
+                tvStreak.setTextSize(12f);
+
+                item.addView(cb);
+                item.addView(tvTitle);
+                item.addView(tvStreak);
+                habitsContainer.addView(item);
+
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        recalculateVibeIndex();
+    }
+
+    private void setupTextToSpeech() {
+        tts = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                tts.setLanguage(new Locale("ru"));
+            }
+        });
+    }
+
+    private void speakText(String text) {
+        if (isVoiceEnabled && tts != null) {
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+        }
+    }
+
+    private void showSettingsDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("🔧 Настройки L.I.R.A. AI");
+
+        String[] options = {
+            isVoiceEnabled ? "🔇 Отключить голосовые ответы" : "🔊 Включить голосовые ответы",
+            "Очистить историю чата",
+            "Очистить историю финансов",
+            "Очистить все заметки",
+            "Сбросить привычки"
+        };
+
+        builder.setItems(options, (dialog, which) -> {
+            if (which == 0) {
+                isVoiceEnabled = !isVoiceEnabled;
+            } else if (which == 1) {
+                chatContainer.removeAllViews();
+            } else if (which == 2) {
+                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                db.delete(ExpenseDbHelper.TABLE_EXPENSES, null, null);
+                loadFinanceData();
+            } else if (which == 3) {
+                SQLiteDatabase db = notesDbHelper.getWritableDatabase();
+                db.delete(NotesDbHelper.TABLE_NOTES, null, null);
+                loadNotesData();
+            } else if (which == 4) {
+                SQLiteDatabase db = vibeDbHelper.getWritableDatabase();
+                db.delete(VibeDbHelper.TABLE_HABITS, null, null);
+                vibeDbHelper.onCreate(db);
+                loadHabitsData();
+            }
+        });
+
+        builder.setPositiveButton("Закрыть", null);
+        builder.show();
+    }
+
+    private void addChatMessage(String name, String message, boolean isUser) {
+        String time = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+        TextView tv = new TextView(this);
+        
+        SpannableString content = new SpannableString(name + "\n" + message + "\n" + time);
+        content.setSpan(new ForegroundColorSpan(isUser ? Color.parseColor("#004400") : Color.parseColor("#00FF66")), 0, name.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        content.setSpan(new StyleSpan(Typeface.BOLD), 0, name.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        
+        tv.setText(content);
+        tv.setTextSize(14f);
+        tv.setTextColor(isUser ? Color.parseColor("#121212") : Color.parseColor("#FFFFFF"));
+        tv.setBackgroundResource(isUser ? R.drawable.bg_user_msg : R.drawable.bg_lira_msg);
+        
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(12, 12, 12, 12);
+        params.gravity = isUser ? Gravity.END : Gravity.START;
+        tv.setLayoutParams(params);
+        
+        chatContainer.addView(tv);
+        layoutChatTab.post(() -> layoutChatTab.fullScroll(View.FOCUS_DOWN));
+
+        if (!isUser) {
+            speakText(message.replace("L.I.R.A.", "").trim());
+        }
+    }
+
+    private void setupSpeechRecognizer() {
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        speechRecognizer.setRecognitionListener(new RecognitionListener() {
+            @Override public void onReadyForSpeech(Bundle params) {}
+            @Override public void onBeginningOfSpeech() {}
+            @Override public void onRmsChanged(float rmsdB) {}
+            @Override public void onBufferReceived(byte[] buffer) {}
+            @Override public void onEndOfSpeech() {}
+            @Override public void onError(int error) {}
+            @Override public void onResults(Bundle results) {
+                ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                if (matches != null && !matches.isEmpty()) {
+                    String spokenText = matches.get(0);
+                    addChatMessage("Вы", spokenText, true);
+                    processCommand(spokenText);
+                }
+            }
+            @Override public void onPartialResults(Bundle partialResults) {}
+            @Override public void onEvent(int eventType, Bundle params) {}
+        });
+    }
+
+    private void processCommand(String text) {
+        String lower = text.toLowerCase();
+
+        if (lower.startsWith("запомни ") || lower.startsWith("заметка ") || lower.startsWith("напомни ")) {
+            String noteContent = text.replaceFirst("(?i)^(запомни|заметка|напомни)\\s+", "").trim();
+            saveNote(noteContent);
+            loadNotesData();
+            addChatMessage("L.I.R.A.", "Сохранила заметку: «" + noteContent + "»", false);
+            return;
+        }
+
+        if (lower.contains("время") || lower.contains("час")) {
+            String currentTime = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+            addChatMessage("L.I.R.A.", "Текущее время: " + currentTime, false);
+            return;
+        }
+
+        if (lower.contains("дата") || lower.contains("число")) {
+            String currentDate = new SimpleDateFormat("EEEE, d MMMM yyyy г.", new Locale("ru")).format(new Date());
+            addChatMessage("L.I.R.A.", "Сегодняшняя дата: " + currentDate, false);
+            return;
+        }
+
+        if (lower.contains("шаг") || lower.contains("активность")) {
+            addChatMessage("L.I.R.A.", "Сегодня вы прошли " + todaySteps + " шагов.", false);
+            return;
+        }
+
+        if (lower.contains("фонарик") || lower.contains("свет")) {
+            toggleFlashlight();
+            return;
+        }
+
+        if (lower.startsWith("открой ") || lower.startsWith("запусти ")) {
+            openApp(lower.replace("открой ", "").replace("запусти ", "").trim());
+            return;
+        }
+
+        addChatMessage("L.I.R.A.", "Команда принята.", false);
+    }
+
+    private void saveNote(String text) {
+        SQLiteDatabase db = notesDbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        String dateStr = new SimpleDateFormat("d MMM HH:mm", new Locale("ru")).format(new Date());
+        values.put(NotesDbHelper.COLUMN_TEXT, text);
+        values.put(NotesDbHelper.COLUMN_DATE, dateStr);
+        db.insert(NotesDbHelper.TABLE_NOTES, null, values);
+    }
+
+    private void loadNotesData() {
+        notesListContainer.removeAllViews();
+        SQLiteDatabase db = notesDbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT " + NotesDbHelper.COLUMN_ID + ", " + NotesDbHelper.COLUMN_TEXT + ", " + NotesDbHelper.COLUMN_DATE + " FROM " + NotesDbHelper.TABLE_NOTES + " ORDER BY " + NotesDbHelper.COLUMN_ID + " DESC", null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                final int noteId = cursor.getInt(0);
+                String noteText = cursor.getString(1);
+                String noteDate = cursor.getString(2);
+
+                LinearLayout card = new LinearLayout(this);
+                card.setOrientation(LinearLayout.HORIZONTAL);
+                card.setBackgroundResource(R.drawable.bg_card_cyber);
+                card.setPadding(28, 20, 28, 20);
+
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                params.setMargins(0, 0, 0, 12);
+                card.setLayoutParams(params);
+
+                LinearLayout textLayout = new LinearLayout(this);
+                textLayout.setOrientation(LinearLayout.VERTICAL);
+                textLayout.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+                TextView tvText = new TextView(this);
+                tvText.setText("📌 " + noteText);
+                tvText.setTextColor(Color.WHITE);
+                tvText.setTextSize(14f);
+
+                TextView tvDate = new TextView(this);
+                tvDate.setText(noteDate);
+                tvDate.setTextColor(Color.parseColor("#8800FF66"));
+                tvDate.setTextSize(11f);
+
+                textLayout.addView(tvText);
+                textLayout.addView(tvDate);
+
+                Button btnDel = new Button(this);
+                btnDel.setText("✕");
+                btnDel.setTextColor(Color.RED);
+                btnDel.setBackgroundColor(Color.TRANSPARENT);
+                btnDel.setOnClickListener(v -> {
+                    SQLiteDatabase wdb = notesDbHelper.getWritableDatabase();
+                    wdb.delete(NotesDbHelper.TABLE_NOTES, NotesDbHelper.COLUMN_ID + "=?", new String[]{String.valueOf(noteId)});
+                    loadNotesData();
+                });
+
+                card.addView(textLayout);
+                card.addView(btnDel);
+                notesListContainer.addView(card);
+
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+    }
+
+    private void toggleFlashlight() {
+        try {
+            CameraManager camManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            String cameraId = camManager.getCameraIdList()[0];
+            isFlashlightOn = !isFlashlightOn;
+            camManager.setTorchMode(cameraId, isFlashlightOn);
+            addChatMessage("L.I.R.A.", isFlashlightOn ? "Фонарик включён." : "Фонарик выключен.", false);
+        } catch (Exception e) {}
+    }
+
+    private void openApp(String appName) {
+        PackageManager pm = getPackageManager();
+        List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+        for (ApplicationInfo packageInfo : packages) {
+            String installedAppName = pm.getApplicationLabel(packageInfo).toString().toLowerCase();
+            if (installedAppName.contains(appName)) {
+                Intent intent = pm.getLaunchIntentForPackage(packageInfo.packageName);
+                if (intent != null) {
+                    startActivity(intent);
+                    return;
+                }
+            }
+        }
+    }
+
+    private void showTab(int tabIndex) {
+        layoutChatTab.setVisibility(tabIndex == 0 ? View.VISIBLE : View.GONE);
+        layoutFinanceTab.setVisibility(tabIndex == 1 ? View.VISIBLE : View.GONE);
+        layoutNotesTab.setVisibility(tabIndex == 2 ? View.VISIBLE : View.GONE);
+        layoutVibeTab.setVisibility(tabIndex == 3 ? View.VISIBLE : View.GONE);
+
+        btnTabChat.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor(tabIndex == 0 ? "#00FF66" : "#2A392F")));
+        btnTabChat.setTextColor(Color.parseColor(tabIndex == 0 ? "#121212" : "#00FF66"));
+
+        btnTabFinance.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor(tabIndex == 1 ? "#00FF66" : "#2A392F")));
+        btnTabFinance.setTextColor(Color.parseColor(tabIndex == 1 ? "#121212" : "#00FF66"));
+
+        btnTabNotes.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor(tabIndex == 2 ? "#00FF66" : "#2A392F")));
+        btnTabNotes.setTextColor(Color.parseColor(tabIndex == 2 ? "#121212" : "#00FF66"));
+
+        btnTabVibe.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor(tabIndex == 3 ? "#00FF66" : "#2A392F")));
+        btnTabVibe.setTextColor(Color.parseColor(tabIndex == 3 ? "#121212" : "#00FF66"));
+    }
+
+    private void addFinanceRecord(String category, float amount) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(ExpenseDbHelper.COLUMN_CATEGORY, category);
+        values.put(ExpenseDbHelper.COLUMN_AMOUNT, amount);
+        db.insert(ExpenseDbHelper.TABLE_EXPENSES, null, values);
+    }
+
+    private void loadFinanceData() {
+        financeListContainer.removeAllViews();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT " + ExpenseDbHelper.COLUMN_CATEGORY + ", SUM(" + ExpenseDbHelper.COLUMN_AMOUNT + ") FROM " + ExpenseDbHelper.TABLE_EXPENSES + " GROUP BY " + ExpenseDbHelper.COLUMN_CATEGORY, null);
+        
+        float totalBalance = 0, totalIncome = 0, totalExpense = 0;
+
+        if (cursor.moveToFirst()) {
+            do {
+                String category = cursor.getString(0);
+                float amount = cursor.getFloat(1);
+                totalBalance += amount;
+                if (amount > 0) totalIncome += amount;
+                else totalExpense += Math.abs(amount);
+
+                LinearLayout card = new LinearLayout(this);
+                card.setOrientation(LinearLayout.HORIZONTAL);
+                card.setBackgroundResource(R.drawable.bg_card_cyber);
+                card.setPadding(32, 24, 32, 24);
+                
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                params.setMargins(0, 0, 0, 16);
+                card.setLayoutParams(params);
+
+                TextView tvCat = new TextView(this);
+                tvCat.setText("🏷️ " + category);
+                tvCat.setTextColor(Color.WHITE);
+                tvCat.setTextSize(15f);
+                tvCat.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+                TextView tvVal = new TextView(this);
+                tvVal.setText((amount > 0 ? "+" : "") + (int)amount + " ₸");
+                tvVal.setTextColor(amount >= 0 ? Color.parseColor("#00FF66") : Color.parseColor("#FF5555"));
+                tvVal.setTextSize(15f);
+                tvVal.setTypeface(null, Typeface.BOLD);
+
+                card.addView(tvCat);
+                card.addView(tvVal);
+                financeListContainer.addView(card);
+
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+
+        tvTotalBalance.setText((int)totalBalance + " ₸");
+        tvIncomeTotal.setText("+" + (int)totalIncome + " ₸");
+        tvExpenseTotal.setText("-" + (int)totalExpense + " ₸");
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (sensorManager != null) {
+            sensorManager.unregisterListener(this);
+        }
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        super.onDestroy();
+    }
+}

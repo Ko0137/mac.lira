@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Заголовок и кнопка закрытия (крестик) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Политика конфиденциальности"
+            android:textColor="#121212"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvClose"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:gravity="center"
+            android:text="✕"
+            android:textColor="#666666"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="12dp"
+        android:background="#E0E0E0" />
+
+    <!-- Текст политики конфиденциальности -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Настоящая Политика конфиденциальности описывает, как приложение L.I.R.A. (далее — «Приложение») обрабатывает и защищает информацию пользователей.\n\n1. Сбор информации\nПриложение разработано с учетом принципов конфиденциальности. Мы не собираем, не передаем и не храним ваши персональные данные на сторонних серверах.\n\n2. Локальные настройки\nВсе параметры интерфейса (темная тема, выбор голоса помощника, тихий режим) сохраняются исключительно в локальном хранилище вашего устройства (SharedPreferences) и не покидают его.\n\n3. Голосовые команды и сеть\nПриложение обрабатывает голосовые запросы для выполнения команд на устройстве. Сетевые запросы используются исключительно для работы встроенных функций ассистента.\n\n4. Безопасность\nМы принимаем все необходимые меры для защиты ваших данных от несанкционированного доступа.\n\n5. Изменения политики\nМы оставляем за собой право обновлять настоящую Политику конфиденциальности по мере необходимости."
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:lineSpacingExtra="4dp" />
+    </ScrollView>
+
+    <!-- Кнопка Понятно -->
+    <Button
+        android:id="@+id/btnOk"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="#00E676"
+        android:text="Понятно"
+        android:textColor="#121212"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

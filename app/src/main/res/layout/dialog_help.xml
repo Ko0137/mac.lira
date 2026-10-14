@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="#1E1E1E">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📖 Справка и Команды L.I.R.A."
+        android:textColor="#00E676"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="12dp"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="300dp">
+
+        <TextView
+            android:id="@+id/tvHelpContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#DDDDDD"
+            android:textSize="14sp"
+            android:lineSpacingExtra="4dp"
+            android:text="Примеры голосовых и текстовых команд:\n\n📱 ПРИЛОЖЕНИЯ И СИСТЕМА:\n• 'Открой [название]' — запуск любого приложения.\n• 'Фонарик' или 'Включи свет' — управление вспышкой.\n• 'Заряд' или 'Батарея' — уровень аккумулятора.\n\n🎵 МЕДИА И ЗВУК:\n• 'Музыка' / 'Пауза' — управление плеером.\n\n📝 ЗАМЕТКИ:\n• 'Заметка [текст]' — сохранить новую заметку.\n• 'Прочитай заметки' — зачитать сохраненное.\n• 'Очисти заметки' — удалить все заметки.\n\n🎈 ФОНОВЫЙ РЕЖИМ:\nВключите 'Фоновый режим' в настройках. Появится плавающая кнопка L.I.R.A. поверх всех окон для быстрого вызова!"/>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnCloseHelp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="#00E676"
+        android:text="Понятно"
+        android:textColor="#000000"/>
+</LinearLayout>

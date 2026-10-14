@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawerLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <!-- Главный экран (Чат) -->
+    <LinearLayout
+        android:id="@+id/mainLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#0E1621">
+
+        <FrameLayout
+            android:id="@+id/contentFrame"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/chatScreen"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:background="#0E1621">
+
+                <!-- Telegram-style Header -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:background="#17212B">
+
+                    <ImageButton
+                        android:id="@+id/btnMenu"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@android:drawable/ic_menu_sort_by_size"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:tint="#FFFFFF"
+                        android:contentDescription="Меню"
+                        android:layout_marginEnd="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="L.I.R.A. Assistant"
+                            android:textColor="#FFFFFF"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/connectionStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Локальный режим"
+                            android:textColor="#6AB2F2"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:padding="8dp"
+                    android:clipToPadding="false" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    android:background="#17212B"
+                    android:gravity="center_vertical">
+
+                    <ImageButton
+                        android:id="@+id/btnVoice"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:src="@android:drawable/ic_btn_speak_now"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:tint="#788B9B"
+                        android:contentDescription="Голосовой ввод" />
+
+                    <EditText
+                        android:id="@+id/etMessage"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="8dp"
+                        android:hint="Сообщение или команда..."
+                        android:textColor="#FFFFFF"
+                        android:textColorHint="#788B9B"
+                        android:background="@drawable/bg_message_input"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="10dp"
+                        android:maxLines="4"
+                        android:textSize="15sp" />
+
+                    <ImageButton
+                        android:id="@+id/btnSend"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:src="@android:drawable/ic_menu_send"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:tint="#5288C1"
+                        android:contentDescription="Отправить" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/moduleContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/bottomTabs"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:background="#17212B"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/btnTabChat"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Чат"
+                android:textColor="#6AB2F2"
+                android:textSize="14sp"
+                android:background="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/btnTabFinance"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Финансы"
+                android:textColor="#9AAAB7"
+                android:textSize="14sp"
+                android:background="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/btnTabGoals"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Цели"
+                android:textColor="#9AAAB7"
+                android:textSize="14sp"
+                android:background="?attr/selectableItemBackground" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Выдвижное боковое меню (в стиле Telegram) -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navView"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="#17212B"
+        app:itemTextColor="#FFFFFF"
+        app:itemIconTint="#6AB2F2"
+        app:headerLayout="@layout/nav_header"
+        app:menu="@menu/drawer_menu" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

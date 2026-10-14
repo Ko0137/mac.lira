@@ -1,0 +1,55 @@
+L.I.R.A. for macOS — build kit
+
+This kit creates native installers for both Apple Silicon and Intel Macs.
+The final installer must be built on a Mac; a Windows computer cannot create
+or test a macOS application bundle.
+
+Requirements for the person building the installers:
+- An Apple Silicon Mac (M1/M2/M3/M4) with Rosetta 2 installed.
+- JDK 17 for macOS ARM64 and JDK 17 for macOS x64/Intel.
+- Internet access for the first build (Gradle downloads build dependencies).
+- Enough free space for the build, Java runtimes, and the bundled voice model.
+
+Steps:
+1. Unzip this archive and open Terminal.
+2. Change directory into the included LIRA-desktop folder.
+3. Set JAVA_HOME_ARM64 and JAVA_HOME_X64 to the JDK 17 installation folders.
+   On macOS these are normally under
+   /Library/Java/JavaVirtualMachines/<jdk-name>/Contents/Home.
+4. To sign with an Apple Developer ID, set APPLE_SIGN_IDENTITY to the exact
+   "Developer ID Application: Name (TEAMID)" identity installed in Keychain.
+   Optionally set APPLE_SIGN_KEYCHAIN to the keychain containing the identity.
+   To notarize automatically, first create an Apple notarytool keychain
+   profile, then set APPLE_NOTARY_PROFILE to that profile name. Never send
+   Apple ID passwords, private keys, or app-specific passwords in chat or
+   inside the archive.
+5. Build the two installers:
+
+   bash ./build-macos.sh universal
+
+   Without APPLE_SIGN_IDENTITY the script creates unsigned installers.
+   With APPLE_NOTARY_PROFILE set, the signed DMGs are submitted for notarization
+   and stapled automatically.
+6. Send back:
+   build/LIRA-macOS-Universal.zip
+
+That ZIP contains one DMG for Apple Silicon and another for Intel. Install
+the matching DMG on each Mac. Unsigned DMGs may require Control-click > Open
+on first launch. For distribution without Gatekeeper warnings, sign and
+notarize with an Apple Developer ID.
+
+To build only an installer for the current Mac:
+
+   export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+   bash ./build-macos.sh native
+
+The GitHub repository also has a macOS Actions workflow that builds the
+Apple Silicon and Intel installers. With the repository's Actions secrets
+configured, it signs and notarizes the DMGs and publishes the ZIP as the
+LIRA-macOS-Universal workflow artifact. See desktop/README.md for the required
+secret names. Without those secrets, the workflow creates unsigned test DMGs.
+
+The app works offline for local data and Russian voice recognition after the
+first launch extracts its bundled speech model. Allow microphone access if
+voice input is used. Browser searches require internet. Local Wi-Fi sync is
+not encrypted; use a trusted private network.

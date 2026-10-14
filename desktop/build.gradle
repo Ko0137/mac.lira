@@ -1,0 +1,58 @@
+plugins {
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+group = 'com.example.lira'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['--add-modules', 'jdk.httpserver'])
+}
+
+javafx {
+    version = '21.0.2'
+    modules = ['javafx.controls']
+}
+
+dependencies {
+    implementation 'org.xerial:sqlite-jdbc:3.46.1.0'
+    implementation 'com.alphacephei:vosk:0.3.45'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+tasks.register('fatJar', Jar) {
+    archiveClassifier = 'all'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes('Main-Class': 'com.example.lira.desktop.LiraDesktopApp')
+    }
+    from sourceSets.main.output
+    from {
+        configurations.runtimeClasspath
+                .filter { !it.name.startsWith('javafx-') }
+                .collect { zipTree(it) }
+    }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'module-info.class'
+}
+
+application {
+    mainClass = 'com.example.lira.desktop.LiraDesktopApp'
+    applicationDefaultJvmArgs = ['--add-modules', 'jdk.httpserver']
+}

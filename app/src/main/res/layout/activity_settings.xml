@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="18dp"
+            android:text="⚙️ Настройки L.I.R.A."
+            android:textColor="#00E676"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🌙 Темная тема\nГлубокое темное оформление"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp" />
+
+            <Switch
+                android:id="@+id/themeSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔊 Озвучивать ответы\nL.I.R.A. будет говорить о выполнении команд"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp" />
+
+            <Switch
+                android:id="@+id/speakResponsesSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="👩 Женский голос\nВыбери тембр синтезированной речи"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp" />
+
+            <Switch
+                android:id="@+id/voiceSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🎙 Фоновое распознавание\nСкажи «Лира» и команду; в фоне нужен постоянный микрофон и уведомление"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp" />
+
+            <Switch
+                android:id="@+id/backgroundVoiceSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔘 Плавающая кнопка\nБыстрый запуск голосового ввода поверх приложений"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp" />
+
+            <Switch
+                android:id="@+id/floatingWidgetSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔕 Тихий режим\nНе озвучивать ответы голосом"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp" />
+
+            <Switch
+                android:id="@+id/quietSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/privacyPolicyLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="📄 Политика конфиденциальности"
+            android:textColor="#00E676"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Синхронизация работает только в одной локальной Wi-Fi сети. Используй доверенную сеть."
+            android:textColor="#8A9BA8"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/syncWifiButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="#5288C1"
+            android:text="Синхронизировать с ПК по Wi-Fi"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/backButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#00E676"
+            android:text="Сохранить и назад"
+            android:textColor="#121212"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</ScrollView>

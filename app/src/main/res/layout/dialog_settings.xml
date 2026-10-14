@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:attr/colorBackgroundFloating"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Настройки L.I.R.A."
+        android:textColor="#00E676"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:background="#333333" />
+
+    <Switch
+        android:id="@+id/switchTheme"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:text="Тёмная тема"
+        android:textSize="16sp" />
+
+    <Switch
+        android:id="@+id/switchVoice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:text="Голосовые ответы (TTS)"
+        android:textSize="16sp" />
+
+    <Switch
+        android:id="@+id/switchWidget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:text="Плавающий виджет поверх окон"
+        android:textSize="16sp" />
+
+    <EditText
+        android:id="@+id/etUserName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:hint="Ваше имя"
+        android:inputType="textPersonName"
+        android:padding="10dp" />
+
+    <Button
+        android:id="@+id/btnClearChat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="#D32F2F"
+        android:text="Очистить историю чата"
+        android:textColor="#FFFFFF" />
+
+    <Button
+        android:id="@+id/btnSaveSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#00E676"
+        android:text="Сохранить"
+        android:textColor="#000000" />
+</LinearLayout>

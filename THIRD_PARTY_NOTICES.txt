@@ -1,0 +1,13 @@
+L.I.R.A. includes the following third-party components:
+
+Vosk Android 0.3.32
+Copyright Alpha Cephei Inc.
+https://github.com/alphacep/vosk-android
+Licensed under the Apache License, Version 2.0.
+
+Vosk Russian small speech-recognition model 0.22
+https://alphacephei.com/vosk/models
+Licensed under the Apache License, Version 2.0.
+
+A copy of the Apache License, Version 2.0, is included in
+app/src/main/assets/LICENSE-2.0.txt.
